@@ -30,7 +30,7 @@ type IncomingMessage = {
 
 export async function POST(request: Request) {
   try {
-    const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
+    const apiKey = "AQ.Ab8RN6L7y41KD6vwNlJFSXXMjmdfzc0Uo-SBp0KXrWKlpiFqzg"
 
     if (!apiKey) {
       return NextResponse.json(

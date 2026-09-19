@@ -17,25 +17,17 @@ import { AITutor } from "./AITutor";
 import { InterventionModal } from "./InterventionModal";
 import { ProjectsTracker } from "./ProjectsTracker";
 import { ReadinessGauge } from "./ReadinessGauge";
-import { Button } from "./ui/Button";
-import {
-  LayoutDashboard,
-  BarChart3,
-  Map,
-  Bot,
-  Briefcase,
-  Gauge,
-  RefreshCcw,
-  Sparkles,
-} from "lucide-react";
+import { Sidebar, DashboardTab } from "./Sidebar";
+import { TopBar } from "./TopBar";
+import { StatsRow } from "./StatsRow";
 
 type Phase = "profile" | "assessment" | "dashboard";
-type Tab = "roadmap" | "analytics" | "tutor" | "projects" | "readiness";
 
 export function Dashboard() {
   const [state, setState] = useState<AppState>(emptyState);
   const [hydrated, setHydrated] = useState(false);
-  const [activeTab, setActiveTab] = useState<Tab>("roadmap");
+  const [activeTab, setActiveTab] = useState<DashboardTab>("roadmap");
+  const [searchQuery, setSearchQuery] = useState("");
   const [activeIntervention, setActiveIntervention] = useState<
     ReturnType<typeof detectStruggle>
   >(null);
@@ -98,6 +90,7 @@ export function Dashboard() {
     clearState();
     setState(emptyState);
     setActiveTab("roadmap");
+    setSearchQuery("");
   }
 
   if (phase === "profile") {
@@ -132,17 +125,10 @@ export function Dashboard() {
     state.roadmap,
     state.projects
   );
-
-  const tabs: { key: Tab; label: string; icon: typeof Map }[] = [
-    { key: "roadmap", label: "Roadmap", icon: Map },
-    { key: "analytics", label: "Skill Gaps", icon: BarChart3 },
-    { key: "tutor", label: "AI Tutor", icon: Bot },
-    { key: "projects", label: "Projects", icon: Briefcase },
-    { key: "readiness", label: "Readiness", icon: Gauge },
-  ];
+  const unresolvedCount = state.interventions.filter((i) => !i.resolved).length;
 
   return (
-    <main className="min-h-screen pb-16">
+    <div className="flex min-h-screen flex-col md:flex-row">
       {activeIntervention && (
         <InterventionModal
           event={activeIntervention}
@@ -150,89 +136,65 @@ export function Dashboard() {
         />
       )}
 
-      <header className="border-b border-border bg-card/50 px-4 py-4 backdrop-blur">
-        <div className="mx-auto flex max-w-5xl items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/15 text-primary">
-              <LayoutDashboard size={18} />
+      <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
+
+      <div className="flex min-w-0 flex-1 flex-col">
+        <TopBar
+          studentName={state.profile?.name ?? "Student"}
+          targetRole={state.profile?.targetRole ?? ""}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          unresolvedCount={unresolvedCount}
+          onRetake={() => setState((s) => ({ ...s, assessment: null }))}
+          onRestart={handleRestart}
+        />
+
+        <main className="flex-1 px-4 py-6 md:px-8">
+          <div className="mx-auto max-w-5xl">
+            <div className="mb-6">
+              <StatsRow readiness={readiness} roadmap={state.roadmap} projects={state.projects} />
             </div>
-            <div>
-              <p className="text-sm font-semibold leading-none">
-                EduPath — {state.profile?.name}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Targeting: {state.profile?.targetRole.replace(/-/g, " ")}
-              </p>
-            </div>
+
+            {activeTab === "analytics" && (
+              <SkillGapChart
+                skillScores={state.assessment!.skillScores}
+                overallScore={state.assessment!.overallScore}
+              />
+            )}
+
+            {activeTab === "roadmap" && state.roadmap && (
+              <RoadmapView
+                roadmap={state.roadmap}
+                searchQuery={searchQuery}
+                onRoadmapChange={(roadmap) => {
+                  setState((s) => ({ ...s, roadmap }));
+                  checkForStruggle(roadmap);
+                }}
+                onSimulateFailure={handleSimulateFailure}
+              />
+            )}
+
+            {activeTab === "tutor" && (
+              <AITutor
+                messages={state.chatMessages}
+                onMessagesChange={(chatMessages) => setState((s) => ({ ...s, chatMessages }))}
+                targetRole={state.profile?.targetRole}
+                currentTopic={state.roadmap?.topics.find((t) => t.status !== "completed")?.title}
+              />
+            )}
+
+            {activeTab === "projects" && (
+              <ProjectsTracker
+                projects={state.projects}
+                searchQuery={searchQuery}
+                onProjectsChange={(projects) => setState((s) => ({ ...s, projects }))}
+              />
+            )}
+
+            {activeTab === "readiness" && <ReadinessGauge breakdown={readiness} />}
           </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setState((s) => ({ ...s, assessment: null }))}
-            >
-              <Sparkles size={14} /> Retake Assessment
-            </Button>
-            <Button variant="ghost" size="sm" onClick={handleRestart}>
-              <RefreshCcw size={14} /> Start Over
-            </Button>
-          </div>
-        </div>
-      </header>
-
-      <nav className="sticky top-0 z-10 border-b border-border bg-background/95 px-4 backdrop-blur">
-        <div className="mx-auto flex max-w-5xl gap-1 overflow-x-auto">
-          {tabs.map(({ key, label, icon: Icon }) => (
-            <button
-              key={key}
-              onClick={() => setActiveTab(key)}
-              className={`flex items-center gap-1.5 whitespace-nowrap border-b-2 px-3 py-3 text-sm font-medium transition-colors ${
-                activeTab === key
-                  ? "border-primary text-primary"
-                  : "border-transparent text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <Icon size={15} /> {label}
-            </button>
-          ))}
-        </div>
-      </nav>
-
-      <div className="mx-auto max-w-5xl px-4 py-8">
-        {activeTab === "analytics" && (
-          <SkillGapChart
-            skillScores={state.assessment!.skillScores}
-            overallScore={state.assessment!.overallScore}
-          />
-        )}
-
-        {activeTab === "roadmap" && state.roadmap && (
-          <RoadmapView
-            roadmap={state.roadmap}
-            onRoadmapChange={(roadmap) => {
-              setState((s) => ({ ...s, roadmap }));
-              checkForStruggle(roadmap);
-            }}
-            onSimulateFailure={handleSimulateFailure}
-          />
-        )}
-
-        {activeTab === "tutor" && (
-          <AITutor
-            messages={state.chatMessages}
-            onMessagesChange={(chatMessages) => setState((s) => ({ ...s, chatMessages }))}
-          />
-        )}
-
-        {activeTab === "projects" && (
-          <ProjectsTracker
-            projects={state.projects}
-            onProjectsChange={(projects) => setState((s) => ({ ...s, projects }))}
-          />
-        )}
-
-        {activeTab === "readiness" && <ReadinessGauge breakdown={readiness} />}
+        </main>
       </div>
-    </main>
+    </div>
   );
 }

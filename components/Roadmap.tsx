@@ -188,12 +188,22 @@ export function RoadmapView({
   roadmap,
   onRoadmapChange,
   onSimulateFailure,
+  searchQuery = "",
 }: {
   roadmap: RoadmapType;
   onRoadmapChange: (roadmap: RoadmapType) => void;
   onSimulateFailure: (topicId: string) => void;
+  searchQuery?: string;
 }) {
   const completedCount = roadmap.topics.filter((t) => t.status === "completed").length;
+  const query = searchQuery.trim().toLowerCase();
+  const visibleTopics = query
+    ? roadmap.topics.filter(
+        (t) =>
+          t.title.toLowerCase().includes(query) ||
+          t.skillName.toLowerCase().includes(query)
+      )
+    : roadmap.topics;
 
   function updateTopic(updated: RoadmapTopic) {
     onRoadmapChange({
@@ -224,7 +234,13 @@ export function RoadmapView({
         </CardContent>
       </Card>
 
-      {roadmap.topics.map((topic) => (
+      {visibleTopics.length === 0 && (
+        <p className="py-8 text-center text-sm text-muted-foreground">
+          No topics match "{searchQuery}".
+        </p>
+      )}
+
+      {visibleTopics.map((topic) => (
         <TopicCard
           key={topic.id}
           topic={topic}

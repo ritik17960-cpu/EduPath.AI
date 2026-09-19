@@ -14,10 +14,17 @@ const difficultyVariant: Record<RealWorldProject["difficulty"], "success" | "war
 export function ProjectsTracker({
   projects,
   onProjectsChange,
+  searchQuery = "",
 }: {
   projects: RealWorldProject[];
   onProjectsChange: (projects: RealWorldProject[]) => void;
+  searchQuery?: string;
 }) {
+  const query = searchQuery.trim().toLowerCase();
+  const visibleProjects = query
+    ? projects.filter((p) => p.title.toLowerCase().includes(query))
+    : projects;
+
   function toggleItem(projectId: string, itemId: string) {
     onProjectsChange(
       projects.map((p) =>
@@ -35,7 +42,12 @@ export function ProjectsTracker({
 
   return (
     <div className="space-y-4 animate-fade-in">
-      {projects.map((project) => {
+      {visibleProjects.length === 0 && (
+        <p className="py-8 text-center text-sm text-muted-foreground">
+          No projects match "{searchQuery}".
+        </p>
+      )}
+      {visibleProjects.map((project) => {
         const completed = project.checklist.filter((c) => c.completed).length;
         const total = project.checklist.length;
         return (

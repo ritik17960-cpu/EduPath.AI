@@ -1,6 +1,7 @@
 import {
   HTMLAttributes,
   InputHTMLAttributes,
+  LabelHTMLAttributes,
   SelectHTMLAttributes,
   TextareaHTMLAttributes,
 } from "react";
@@ -89,7 +90,7 @@ export function Select({
   );
 }
 
-export function Label({ className, ...props }: HTMLAttributes<HTMLLabelElement>) {
+export function Label({ className, ...props }: LabelHTMLAttributes<HTMLLabelElement>) {
   return (
     <label
       className={clsx("mb-1.5 block text-sm font-medium text-foreground", className)}

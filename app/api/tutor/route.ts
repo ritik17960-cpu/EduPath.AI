@@ -14,8 +14,8 @@ moving to something actionable.`;
 const PRIMARY_MODEL = "gemini-3.6-flash";
 const FALLBACK_MODEL = "gemini-3.5-flash-lite";
 
-const MAX_RETRIES = 3;
-const REQUEST_TIMEOUT_MS = 20_000;
+const MAX_RETRIES = 1;
+const REQUEST_TIMEOUT_MS = 15_000;
 
 // Gemini recommends retrying transient 429/5xx errors with exponential backoff.
 const RETRYABLE_STATUS_CODES = new Set([429, 500, 502, 503, 504]);
@@ -217,7 +217,10 @@ export async function POST(req: NextRequest) {
     },
     contents,
     generationConfig: {
-      maxOutputTokens: 600,
+      maxOutputTokens: 500,
+      thinkingConfig: {
+        thinkingLevel: "low",
+      },
     },
   };
 

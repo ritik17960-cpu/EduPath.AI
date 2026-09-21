@@ -91,7 +91,7 @@ export function AITutor({
           <Bot size={18} className="text-primary" /> AI Tutor
         </CardTitle>
         <CardDescription>
-          Powered by Claude — ask anything about what you're learning.
+          Powered by Gemini — ask anything about what you're learning.
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-1 flex-col overflow-hidden pt-0">

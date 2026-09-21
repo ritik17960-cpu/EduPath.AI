@@ -1,8 +1,10 @@
 "use client";
 
-import { Search, Bell, RefreshCcw, Sparkles } from "lucide-react";
+import { Search, Bell, RefreshCcw, Sparkles, LogOut } from "lucide-react";
 import { Input } from "./ui/Basics";
 import { Button } from "./ui/Button";
+import { createClient } from "@/lib/supabase/client";
+import { useRouter } from "next/navigation";
 
 export function TopBar({
   studentName,
@@ -21,6 +23,8 @@ export function TopBar({
   onRetake: () => void;
   onRestart: () => void;
 }) {
+  const router = useRouter();
+
   const initials = studentName
     .split(" ")
     .map((part) => part[0])
@@ -28,6 +32,13 @@ export function TopBar({
     .slice(0, 2)
     .join("")
     .toUpperCase();
+
+  async function handleSignOut() {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.replace("/sign-in");
+    router.refresh();
+  }
 
   return (
     <header className="sticky top-0 z-10 border-b border-border bg-background/95 px-4 py-3 backdrop-blur md:px-8">
@@ -65,6 +76,11 @@ export function TopBar({
               <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-destructive" />
             )}
           </button>
+
+          <Button variant="ghost" size="sm" title="Sign out" onClick={handleSignOut}>
+            <LogOut size={15} />
+            <span className="hidden sm:inline">Sign out</span>
+          </Button>
 
           <div
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/15 text-xs font-semibold text-primary"

@@ -218,6 +218,9 @@ export async function POST(req: NextRequest) {
     contents,
     generationConfig: {
       maxOutputTokens: 600,
+      thinkingConfig: {
+        thinkingLevel: "low",
+      },
     },
   };
 
